@@ -25,7 +25,7 @@ pub struct Computer {
     page_address: Register<PA_BITS>,
     page_buffer: U<PA_BITS>,
     subroutine_jump_flag: bool,
-    subroutine_ret_addr: U<PC_BITS>,
+    subroutine_buffer: Register<PC_BITS>,
 
     status_flag: bool,
 
@@ -64,7 +64,7 @@ impl Computer {
             page_address: Register::new(),
             page_buffer: 0u8.into(),
             subroutine_jump_flag: false,
-            subroutine_ret_addr: 0u8.into(),
+            subroutine_buffer: Register::new(),
             status_flag: false,
             ports: [
                 DevicePort::new(),
@@ -178,9 +178,13 @@ impl Computer {
                     return;
                 }
 
-                if !self.subroutine_jump_flag {
+                if self.subroutine_jump_flag {
+                    // pc has actually already moved so no need to +1
+                    self.subroutine_buffer.store(self.program_counter.load());
+                } else {
                     self.page_address.store(self.page_buffer);
                 }
+
                 self.program_counter.store(immediate)
             }
             Instruction::LPB { immediate } => self.page_buffer = immediate,
@@ -188,7 +192,7 @@ impl Computer {
             Instruction::RSF => self.status_flag = false,
             Instruction::SSJ => self.subroutine_jump_flag = true,
             Instruction::RSJ => self.subroutine_jump_flag = false,
-            Instruction::RET => self.program_counter.store(self.subroutine_ret_addr),
+            Instruction::RET => self.program_counter.store(self.subroutine_buffer.load()),
             _ => panic!("Instruction not implemented."),
         }
     }

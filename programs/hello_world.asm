@@ -1,15 +1,15 @@
 start:
     ssj
     ssf
-    ldi x 0x4
-    ldi y 0x8
-    brn write_char
-    ldi x 0x6
-    ldi y 0x9
-    brn write_char
+    ldi x 0x8
+    ldi y 0x4
+    brn write_char.addr
+    ldi x 0x9
+    ldi y 0x6
+    brn write_char.addr
     rsj
 end:
-    brn end
+    brn end.addr
 write_char:
     mov z x
     out 0

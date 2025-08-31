@@ -1,3 +1,5 @@
+use std::io::{self, Write};
+
 use crate::device::connectable::device_pin::DevicePin;
 use crate::device::connectable::device_port::DevicePort;
 use crate::device::Device;
@@ -5,7 +7,7 @@ use crate::device::Device;
 pub struct Console {
     ascii: DevicePort<8>,
     write: DevicePin,
-    previous_write: bool
+    previous_write: bool,
 }
 
 impl Console {
@@ -13,14 +15,14 @@ impl Console {
         Console {
             ascii: DevicePort::new(),
             write: DevicePin::new(),
-            previous_write: false
+            previous_write: false,
         }
     }
-    
+
     pub fn ascii_port(&mut self) -> &mut DevicePort<8> {
         &mut self.ascii
     }
-    
+
     pub fn write_pin(&mut self) -> &mut DevicePin {
         &mut self.write
     }
@@ -32,7 +34,8 @@ impl Device for Console {
 
         if new && !self.previous_write {
             let ascii: u8 = self.ascii.read().into();
-            print!("{}", ascii as char)
+            print!("{}", ascii as char);
+            io::stdout().flush().unwrap();
         }
 
         self.previous_write = new;

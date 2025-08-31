@@ -1,4 +1,4 @@
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Location {
     pub index: usize,
     pub line: usize,
@@ -18,7 +18,7 @@ impl Location {
         Location {
             index: self.index + 1,
             line: self.line,
-            col: self.col + 1
+            col: self.col + 1,
         }
     }
 
@@ -26,7 +26,7 @@ impl Location {
         Location {
             index: self.index + 1,
             line: self.line + 1,
-            col: 1
+            col: 1,
         }
     }
 }

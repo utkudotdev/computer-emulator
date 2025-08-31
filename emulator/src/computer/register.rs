@@ -1,15 +1,19 @@
 use common::bytes_to_store_bits;
 use common::un::U;
 
-pub struct Register<const N: usize> where [(); bytes_to_store_bits!(N)]: Sized {
+pub struct Register<const N: usize>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     value: U<N>,
 }
 
-impl<const N: usize> Register<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> Register<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     pub fn new() -> Self {
-        Register {
-            value: 0u8.into(),
-        }
+        Register { value: 0u8.into() }
     }
 
     pub fn store(&mut self, value: U<N>) {

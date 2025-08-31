@@ -1,6 +1,6 @@
-use std::cmp::{Ordering};
-use std::ops::{Add, AddAssign, BitAnd, BitOr, Not, Shl, Shr, Sub, SubAssign};
 use crate::bit_array::BitArray;
+use std::cmp::Ordering;
+use std::ops::{Add, AddAssign, BitAnd, BitOr, Not, Shl, Shr, Sub, SubAssign};
 
 #[macro_export]
 macro_rules! bytes_to_store_bits {
@@ -9,47 +9,56 @@ macro_rules! bytes_to_store_bits {
     };
 }
 
-
 #[derive(Debug, Copy, Clone)]
-pub struct U<const N: usize> where [(); bytes_to_store_bits!(N)]: Sized {
+pub struct U<const N: usize>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     value: BitArray<N>,
 }
 
-impl<const N: usize> U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     pub fn new() -> Self {
         U {
-            value: BitArray::zeroes()
+            value: BitArray::zeroes(),
         }
     }
 
     pub fn with_value(value: BitArray<N>) -> Self {
-        U {
-            value
-        }
+        U { value }
     }
 
     pub fn max() -> Self {
         U {
-            value: BitArray::ones()
+            value: BitArray::ones(),
         }
     }
 
     pub fn min() -> Self {
         U {
-            value: BitArray::zeroes()
+            value: BitArray::zeroes(),
         }
     }
 
-    pub fn change_bits<const M: usize>(self) -> U<M> where [(); bytes_to_store_bits!(M)]: Sized {
+    pub fn change_bits<const M: usize>(self) -> U<M>
+    where
+        [(); bytes_to_store_bits!(M)]: Sized,
+    {
         U {
-            value: self.value.change_bits()
+            value: self.value.change_bits(),
         }
     }
 }
 
 // Important difference between U<N> and standard types: U<N> over/underflows by default.
-impl<const N: usize> Add for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
-    type Output = U<N>;  // Add with overflow
+impl<const N: usize> Add for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
+    type Output = U<N>; // Add with overflow
 
     fn add(mut self, rhs: Self) -> Self::Output {
         let mut carry = false;
@@ -66,14 +75,20 @@ impl<const N: usize> Add for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
     }
 }
 
-impl<const N: usize> AddAssign for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> AddAssign for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     fn add_assign(&mut self, rhs: Self) {
         // TODO: efficiency
         *self = *self + rhs
     }
 }
 
-impl<const N: usize> Sub for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> Sub for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     type Output = U<N>;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -81,13 +96,19 @@ impl<const N: usize> Sub for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
     }
 }
 
-impl<const N: usize> SubAssign for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> SubAssign for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     fn sub_assign(&mut self, rhs: Self) {
         *self = *self - rhs
     }
 }
 
-impl<const N: usize> Not for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> Not for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     type Output = U<N>;
 
     fn not(self) -> Self::Output {
@@ -95,7 +116,10 @@ impl<const N: usize> Not for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
     }
 }
 
-impl<const N: usize> BitAnd for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> BitAnd for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     type Output = U<N>;
 
     fn bitand(mut self, rhs: Self) -> Self::Output {
@@ -109,7 +133,10 @@ impl<const N: usize> BitAnd for U<N> where [(); bytes_to_store_bits!(N)]: Sized 
     }
 }
 
-impl<const N: usize> BitOr for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> BitOr for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     type Output = U<N>;
 
     fn bitor(mut self, rhs: Self) -> Self::Output {
@@ -123,20 +150,30 @@ impl<const N: usize> BitOr for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
     }
 }
 
-impl<const N: usize> Shr<usize> for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> Shr<usize> for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     type Output = U<N>;
 
     fn shr(mut self, rhs: usize) -> Self::Output {
         for i in 0..self.value.len() {
             let grab_index = i + rhs;
-            let new = if grab_index < self.value.len() { self.value.get(grab_index) } else { false };
+            let new = if grab_index < self.value.len() {
+                self.value.get(grab_index)
+            } else {
+                false
+            };
             self.value.set(i, new);
         }
         self
     }
 }
 
-impl<const N: usize> Shl<usize> for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> Shl<usize> for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     type Output = U<N>;
 
     fn shl(mut self, rhs: usize) -> Self::Output {
@@ -153,7 +190,10 @@ impl<const N: usize> Shl<usize> for U<N> where [(); bytes_to_store_bits!(N)]: Si
     }
 }
 
-impl<const N: usize> Ord for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> Ord for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     fn cmp(&self, other: &Self) -> Ordering {
         for (n1, n2) in self.value.iter().zip(other.value.iter()).rev() {
             if n1 > n2 {
@@ -166,13 +206,19 @@ impl<const N: usize> Ord for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
     }
 }
 
-impl<const N: usize> PartialOrd<Self> for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> PartialOrd<Self> for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<const N: usize> PartialEq<Self> for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+impl<const N: usize> PartialEq<Self> for U<N>
+where
+    [(); bytes_to_store_bits!(N)]: Sized,
+{
     fn eq(&self, other: &Self) -> bool {
         self.cmp(other) == Ordering::Equal
     }
@@ -180,10 +226,12 @@ impl<const N: usize> PartialEq<Self> for U<N> where [(); bytes_to_store_bits!(N)
 
 impl<const N: usize> Eq for U<N> where [(); bytes_to_store_bits!(N)]: Sized {}
 
-
 macro_rules! impl_from_primitive {
     ($un:ty, $bits:expr) => {
-        impl<const N: usize> From<$un> for U<N> where [(); bytes_to_store_bits!(N)]: Sized {
+        impl<const N: usize> From<$un> for U<N>
+        where
+            [(); bytes_to_store_bits!(N)]: Sized,
+        {
             fn from(value: $un) -> Self {
                 let bytes = <$un>::to_le_bytes(value);
                 let ba = BitArray::<$bits>::from_array(bytes);
@@ -195,7 +243,10 @@ macro_rules! impl_from_primitive {
 
 macro_rules! impl_to_primitive {
     ($un:ty, $bits:expr) => {
-        impl<const N: usize> From<U<N>> for $un where [(); bytes_to_store_bits!(N)]: Sized {
+        impl<const N: usize> From<U<N>> for $un
+        where
+            [(); bytes_to_store_bits!(N)]: Sized,
+        {
             fn from(value: U<N>) -> Self {
                 let bytes = value.value.change_bits::<$bits>().to_array();
                 <$un>::from_le_bytes(bytes)
@@ -244,7 +295,10 @@ mod tests {
         assert_eq!(e.value, BitArray::from_array([0b00001010, 0]));
 
         let f: U<31> = u64::MAX.into();
-        assert_eq!(f.value, BitArray::from_array([u8::MAX, u8::MAX, u8::MAX, 0b01111111]))
+        assert_eq!(
+            f.value,
+            BitArray::from_array([u8::MAX, u8::MAX, u8::MAX, 0b01111111])
+        )
     }
 
     #[test]
@@ -339,7 +393,12 @@ mod tests {
         let j: U<16> = 0b01100111_00100001u16.into();
         let k: U<16> = 0b01101111_00100010u16.into();
 
-        assert_eq!(u16::from(j - k), 0b01100111_00100001u16.overflowing_sub(0b01101111_00100010u16).0)
+        assert_eq!(
+            u16::from(j - k),
+            0b01100111_00100001u16
+                .overflowing_sub(0b01101111_00100010u16)
+                .0
+        )
     }
 
     #[test]

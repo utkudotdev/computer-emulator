@@ -1,16 +1,22 @@
 #![feature(if_let_guard)]
 #![feature(stmt_expr_attributes)]
 #![feature(proc_macro_hygiene)]
+#![feature(generic_const_exprs)]
+#![feature(map_try_insert)]
 
+mod backend;
 mod lexer;
 mod location;
 mod parser;
 
+use common::architecture::PROGRAM_MEMORY_SIZE;
+
+use crate::backend::compile;
 use crate::lexer::{Lexer, TokenKind};
 use crate::parser::{ErrorTokenKind, ParseError, ParseErrorKind, Parser};
 use std::fmt::{Display, Formatter};
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 fn main() {
@@ -51,15 +57,24 @@ fn main() {
 
     let mut lexer = Lexer::new(input.as_str());
 
-    let mut parser = Parser::new(lexer.iter());
+    let parser = Parser::new(lexer.iter());
     let result = parser.parse();
 
-    if let Err(errors) = result {
-        report_errors(&input_filename, errors);
+    match result {
+        Ok(nodes) => match compile(&nodes) {
+            Ok(mut binary) => {
+                binary.resize(PROGRAM_MEMORY_SIZE, 0);
+                output_file.write(&binary).expect("Failed to write output");
+            }
+            Err(errors) => println!("Compilation error"),
+        },
+        Err(errors) => {
+            report_parse_errors(&input_filename, errors);
+        }
     }
 }
 
-fn report_errors(file: &PathBuf, errors: Vec<ParseError>) {
+fn report_parse_errors(file: &PathBuf, errors: Vec<ParseError>) {
     for error in errors {
         let location = error
             .token
@@ -82,9 +97,12 @@ fn report_errors(file: &PathBuf, errors: Vec<ParseError>) {
                     .join(", ");
                 let found = token.kind;
                 let text = token.text;
-                print!("Expected one of {expected} but found {found} ");
+                print!("Expected one of [{expected}] but found {found} ");
 
-                if found != TokenKind::Newline && found != TokenKind::Colon {
+                if found != TokenKind::Newline
+                    && found != TokenKind::Colon
+                    && found != TokenKind::Dot
+                {
                     println!("'{text}'");
                 } else {
                     println!();
@@ -125,7 +143,9 @@ impl Display for TokenKind {
         let repr = match self {
             TokenKind::Newline => "'\\n'",
             TokenKind::Colon => "':'",
+            TokenKind::Dot => "'.'",
             TokenKind::LabelIdentifier => "label identifier",
+            TokenKind::LabelProperty { .. } => "label property ('addr' or 'page')",
             TokenKind::Instruction { .. } => "instruction",
             TokenKind::NumberLiteral { .. } => "number literal",
             TokenKind::RegisterLiteral { .. } => "register literal",
@@ -139,6 +159,8 @@ impl Display for ErrorTokenKind {
         let repr = match self {
             ErrorTokenKind::Newline => "'\\n'",
             ErrorTokenKind::Colon => "':'",
+            ErrorTokenKind::Dot => "'.'",
+            ErrorTokenKind::LabelProperty => "label property ('addr' or 'page')",
             ErrorTokenKind::LabelIdentifier => "label identifier",
             ErrorTokenKind::Instruction => "instruction",
             ErrorTokenKind::NumberLiteral => "number literal",

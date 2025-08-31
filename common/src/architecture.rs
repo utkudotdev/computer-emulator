@@ -13,4 +13,4 @@ pub const PORT_INDEX_BITS: usize = NUM_PORTS.ilog2() as usize;
 pub const PIN_INDEX_BITS: usize = NUM_PINS.ilog2() as usize;
 
 pub const PROGRAM_MEMORY_SIZE: usize = 2usize.pow(PC_BITS as u32) * 2usize.pow(PA_BITS as u32);
-pub const WORKING_MEMORY_SIZE: usize = 2usize.pow(2 * WORKING_BITS as u32);  // two registers used to index
+pub const WORKING_MEMORY_SIZE: usize = 2usize.pow(2 * WORKING_BITS as u32); // two registers used to index

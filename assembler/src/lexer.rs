@@ -1,6 +1,6 @@
 use crate::location::Location;
 
-#[derive(Eq, PartialEq, Copy, Clone)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum InstructionKind {
     NOP,
     STR,
@@ -60,7 +60,7 @@ impl InstructionKind {
     }
 }
 
-#[derive(Eq, PartialEq, Copy, Clone)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Register {
     A,
     X,
@@ -80,24 +80,42 @@ impl Register {
     }
 }
 
-#[derive(Eq, PartialEq, Copy, Clone)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub enum LabelPropertyKind {
+    Address,
+    Page,
+}
+
+impl LabelPropertyKind {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s {
+            "addr" => Some(LabelPropertyKind::Address),
+            "page" => Some(LabelPropertyKind::Page),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum NumberLiteralKind {
     Decimal,
     Hex,
     Binary,
 }
 
-#[derive(Eq, PartialEq, Copy, Clone)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum TokenKind {
     Newline,
     Colon,
+    Dot,
     LabelIdentifier,
+    LabelProperty { kind: LabelPropertyKind },
     Instruction { kind: InstructionKind },
     NumberLiteral { kind: NumberLiteralKind },
-    RegisterLiteral { register: Register }
+    RegisterLiteral { register: Register },
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Token<'a> {
     pub kind: TokenKind,
     pub location: Location,
@@ -126,10 +144,8 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn iter(&'a mut self) -> Iter {
-        Iter {
-            lexer: self
-        }
+    pub fn iter(&'a mut self) -> Iter<'a> {
+        Iter { lexer: self }
     }
 
     pub fn next_token(&mut self) -> Option<Token<'a>> {
@@ -139,9 +155,9 @@ impl<'a> Lexer<'a> {
                 c if c.is_ascii_digit() => return self.handle_number(),
                 c if c.is_ascii_whitespace() => self.advance(),
                 ';' => self.handle_comment(),
-                _ => return self.handle_ident()
+                _ => return self.handle_ident(),
             };
-        };
+        }
 
         None
     }
@@ -149,7 +165,11 @@ impl<'a> Lexer<'a> {
     fn handle_single(&mut self, kind: TokenKind) -> Option<Token<'a>> {
         let current = self.current_char_as_str()?;
         self.advance();
-        Some(Token { kind, location: self.location, text: current })
+        Some(Token {
+            kind,
+            location: self.location,
+            text: current,
+        })
     }
 
     fn handle_number(&mut self) -> Option<Token<'a>> {
@@ -159,7 +179,7 @@ impl<'a> Lexer<'a> {
         let kind = match num.get(0..2) {
             Some("0x") => NumberLiteralKind::Hex,
             Some("0b") => NumberLiteralKind::Binary,
-            _ => NumberLiteralKind::Decimal
+            _ => NumberLiteralKind::Decimal,
         };
 
         Some(Token {
@@ -174,9 +194,16 @@ impl<'a> Lexer<'a> {
         let str = self.get_sequence()?;
 
         let kind = match str {
-            s if let Some(inst) = InstructionKind::from_str(s) => TokenKind::Instruction { kind: inst },
-            s if let Some(reg) = Register::from_str(s) => TokenKind::RegisterLiteral { register: reg },
-            _ => TokenKind::LabelIdentifier
+            s if let Some(inst) = InstructionKind::from_str(s) => {
+                TokenKind::Instruction { kind: inst }
+            }
+            s if let Some(reg) = Register::from_str(s) => {
+                TokenKind::RegisterLiteral { register: reg }
+            }
+            s if let Some(prop) = LabelPropertyKind::from_str(s) => {
+                TokenKind::LabelProperty { kind: prop }
+            }
+            _ => TokenKind::LabelIdentifier,
         };
 
         Some(Token {
@@ -187,7 +214,10 @@ impl<'a> Lexer<'a> {
     }
 
     fn handle_comment(&mut self) {
-        assert!(self.current_char().is_some(), "Current char must be available to handle a comment");
+        assert!(
+            self.current_char().is_some(),
+            "Current char must be available to handle a comment"
+        );
 
         while let Some(current) = self.current_char() {
             if current == '\n' {
@@ -228,7 +258,10 @@ impl<'a> Lexer<'a> {
 
     /// Returns the current character if the lexer has not finished. Returns None if it has.
     fn current_char(&self) -> Option<char> {
-        self.program.as_bytes().get(self.location.index).map(|&c| c as char)
+        self.program
+            .as_bytes()
+            .get(self.location.index)
+            .map(|&c| c as char)
     }
 
     // Hack of the century
@@ -248,12 +281,13 @@ fn single_char_token(c: char) -> Option<TokenKind> {
     match c {
         '\n' => Some(TokenKind::Newline),
         ':' => Some(TokenKind::Colon),
-        _ => None
+        '.' => Some(TokenKind::Dot),
+        _ => None,
     }
 }
 
 pub struct Iter<'a> {
-    lexer: &'a mut Lexer<'a>
+    lexer: &'a mut Lexer<'a>,
 }
 
 impl<'a> Iterator for Iter<'a> {

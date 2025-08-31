@@ -1,5 +1,5 @@
-pub mod console;
 pub mod connectable;
+pub mod console;
 mod store;
 
 pub trait Device {

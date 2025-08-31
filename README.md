@@ -22,7 +22,7 @@ The design was inspired somewhat by the TMS1000 series. There are four general-p
 | Z                     | Working register, also used for I/O                           | 11                                    |
 | P(rogram) C(ounter)   | Used to address program memory within a page. 6-bit register. | N/A (controlled by jump instructions) |
 | P(age) A(ddress)      | Used to address pages. 4-bit register.                        | N/A (controlled by jump instructions) |
-| P(age) B(uffer)       | Used to change PA on jump. 4-bit register.                    | N/A (controlled by LDP only)          |
+| P(age) B(uffer)       | Used to change PA on jump. 4-bit register.                    | N/A (controlled by LPB only)          |
 | S(ubroutine) B(uffer) | Used for returning from subroutines. 6-bit register.          | N/A (controlled by jump instructions) |
 
 ### Instructions and OpCodes
